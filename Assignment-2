@@ -1,0 +1,115 @@
+import heapq
+import math
+
+# 8 directions
+moves = [(-1,-1), (-1,0), (-1,1),
+         (0,-1),         (0,1),
+         (1,-1), (1,0), (1,1)]
+
+# distance function
+def h(p1, p2):
+    return math.sqrt((p1[0]-p2[0])**2 + (p1[1]-p2[1])**2)
+
+# Best First Search
+def best_first(grid):
+    n = len(grid)
+    start = (0,0)
+    end = (n-1,n-1)
+
+    if grid[0][0] == 1 or grid[n-1][n-1] == 1:
+        return -1, []
+
+    q = [(h(start,end), start)]
+    seen = set()
+    par = {start: None}
+
+    while q:
+        _, cur = heapq.heappop(q)
+        if cur in seen: 
+            continue
+        seen.add(cur)
+
+        if cur == end:
+            return make_path(par, cur)
+
+        for dx, dy in moves:
+            x, y = cur[0]+dx, cur[1]+dy
+            if 0<=x<n and 0<=y<n and grid[x][y]==0 and (x,y) not in seen:
+                par[(x,y)] = cur
+                heapq.heappush(q, (h((x,y), end), (x,y)))
+
+    return -1, []
+
+# A* Search
+def a_star(grid):
+    n = len(grid)
+    start = (0,0)
+    end = (n-1,n-1)
+
+    if grid[0][0] == 1 or grid[n-1][n-1] == 1:
+        return -1, []
+
+    q = [(h(start,end), 0, start)]
+    g = {start: 0}
+    par = {start: None}
+    seen = set()
+
+    while q:
+        f, cost, cur = heapq.heappop(q)
+        if cur in seen: 
+            continue
+        seen.add(cur)
+
+        if cur == end:
+            return make_path(par, cur)
+
+        for dx, dy in moves:
+            x, y = cur[0]+dx, cur[1]+dy
+            if 0<=x<n and 0<=y<n and grid[x][y]==0:
+                new_g = cost+1
+                if new_g < g.get((x,y), 1e9):
+                    g[(x,y)] = new_g
+                    par[(x,y)] = cur
+                    heapq.heappush(q, (new_g+h((x,y), end), new_g, (x,y)))
+
+    return -1, []
+
+# backtrack to get path
+def make_path(par, cur):
+    path = []
+    while cur is not None:
+        path.append(cur)
+        cur = par[cur]
+    path.reverse()
+    return len(path), path
+
+# ---------- Examples ----------
+grids = [
+    [[0,1],
+     [1,0]],
+
+    [[0,0,0],
+     [1,1,0],
+     [1,1,0]],
+
+    [[1,0,0],
+     [1,1,0],
+     [1,1,0]]
+]
+
+for i, g in enumerate(grids,1):
+    print("\nExample",i)
+    b_len, b_path = best_first(g)
+    a_len, a_path = a_star(g)
+
+    if b_len == -1:
+        print("Best First Search -> Path length: -1")
+    else:
+        print("Best First Search -> Path length:", b_len, ", Path:", b_path)
+
+    if a_len == -1:
+        print("A* Search         -> Path length: -1")
+    else:
+        print("A* Search         -> Path length:", a_len, ", Path:", a_path)
+
+
